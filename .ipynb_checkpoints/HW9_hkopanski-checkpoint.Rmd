@@ -1,0 +1,74 @@
+---
+title: "Homework 9"
+author: "Halid Kopanski"
+output: 
+  html_document:
+    toc: yes
+---
+
+```{r}
+library(tidyverse)
+library(MuMIn)
+library(caret)
+
+wine_train <- read_csv("wineQualityTrain.csv")
+wine_test <- read_csv("wineQualityTest.csv")
+
+wine_train %>% head()
+wine_train %>% summary()
+
+wine_train <- wine_train %>% mutate(qual_01 = ifelse(quality >= 6, 1, 0))
+
+lin_summ <- summary(lm(quality ~ . -qual_01, data = wine_train))
+lin_summ
+
+k_lin_fit1 <- train(quality ~ `volatile acidity` + `residual sugar` + `density` + `sulphates` + `alcohol`, 
+                   method = "lm", data = wine_train, trControl = trainControl(method = "cv", number = 10))
+
+k_lin_fit2 <- train(quality ~ `volatile acidity` + `residual sugar` + `sulphates` + `alcohol`, 
+                   method = "lm", data = wine_train, trControl = trainControl(method = "cv", number = 10))
+
+k_lin_fit3 <- train(quality ~ `volatile acidity` + `residual sugar` + `sulphates` + `alcohol` + `residual sugar`:`sulphates`, 
+                   method = "lm", data = wine_train, trControl = trainControl(method = "cv", number = 10))
+
+k_lin_fit4 <- train(quality ~ `volatile acidity`*`residual sugar` + `sulphates` + `alcohol`, 
+                   method = "lm", data = wine_train, trControl = trainControl(method = "cv", number = 10))
+
+k_lin_fit5 <- train(quality ~ poly(`volatile acidity`, 2) + poly(`sulphates`, 2) + poly(`alcohol`, 2), 
+                   method = "lm", data = wine_train, trControl = trainControl(method = "cv", number = 10))
+
+lin_results <- 
+data.frame(
+t(k_lin_fit1$results),
+t(k_lin_fit2$results),
+t(k_lin_fit3$results),
+t(k_lin_fit4$results),
+t(k_lin_fit5$results))
+
+print(lin_results)
+
+k_log_fit1 <- train(as.factor(qual_01) ~ `volatile acidity` + `residual sugar` + `density` + `sulphates` + `alcohol`, 
+                   method = "glm", family = "binomial", data = wine_train, trControl = trainControl(method = "cv", number = 10))
+
+k_log_fit2 <- train(as.factor(qual_01) ~ `volatile acidity` + `residual sugar` + `sulphates` + `alcohol`, 
+                   method = "glm", family = "binomial", data = wine_train, trControl = trainControl(method = "cv", number = 10))
+
+k_log_fit3 <- train(as.factor(qual_01) ~ `volatile acidity` + `residual sugar` + `sulphates` + `alcohol` + `residual sugar`:`sulphates`, 
+                   method = "glm", family = "binomial", data = wine_train, trControl = trainControl(method = "cv", number = 10))
+
+k_log_fit4 <- train(as.factor(qual_01) ~ `volatile acidity`*`residual sugar` + `sulphates` + `alcohol`, 
+                   method = "glm", family = "binomial", data = wine_train, trControl = trainControl(method = "cv", number = 10))
+
+k_log_fit5 <- train(as.factor(qual_01) ~ poly(`volatile acidity`, 2) + poly(`sulphates`, 2) + poly(`alcohol`, 2), 
+                   method = "glm", family = "binomial", data = wine_train, trControl = trainControl(method = "cv", number = 10))
+
+log_results <- 
+data.frame(
+t(k_log_fit1$results),
+t(k_log_fit2$results),
+t(k_log_fit3$results),
+t(k_log_fit4$results),
+t(k_log_fit5$results))
+
+print(log_results)
+```
